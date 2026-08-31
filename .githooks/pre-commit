@@ -1,0 +1,45 @@
+#!/usr/bin/env sh
+# Blocks commits that contain secrets. Enable with: pnpm setup:hooks
+#
+# Fail-closed by design: if gitleaks is not installed the commit is blocked,
+# because a guard that silently does nothing is worse than no guard at all.
+# Escape hatch for a genuine emergency:  SKIP_SECRET_SCAN=1 git commit ...
+
+set -e
+
+if [ "${SKIP_SECRET_SCAN:-}" = "1" ]; then
+  echo "pre-commit: secret scan SKIPPED (SKIP_SECRET_SCAN=1)" >&2
+  exit 0
+fi
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+  cat >&2 <<'MSG'
+
+pre-commit: gitleaks is not installed — commit blocked.
+
+Install it:
+  macOS         brew install gitleaks
+  Linux         https://github.com/gitleaks/gitleaks/releases
+  Go            go install github.com/zricethezav/gitleaks/v8@latest
+
+Then retry. To bypass once (not recommended):
+  SKIP_SECRET_SCAN=1 git commit ...
+
+MSG
+  exit 1
+fi
+
+# Scan only what is staged.
+if ! gitleaks git --staged --no-banner --redact \
+     --config .gitleaks.toml --gitleaks-ignore-path .gitleaksignore; then
+  cat >&2 <<'MSG'
+
+pre-commit: secrets detected in staged changes — commit blocked.
+
+Remove the secret and read it from the environment instead.
+If this is a false positive, add an allowlist entry to .gitleaks.toml
+(or append the line with:  # gitleaks:allow).
+
+MSG
+  exit 1
+fi
