@@ -29,3 +29,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Supabase CLI local state (contains project refs and pooler URLs)
+supabase/.temp/

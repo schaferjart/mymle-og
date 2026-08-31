@@ -1,0 +1,82 @@
+# gitleaks configuration for MeinUngeheuer
+#
+# Run locally:   pnpm scan:secrets          (whole history)
+# Enable hook:   pnpm setup:hooks           (blocks commits containing secrets)
+# Docs:          https://github.com/gitleaks/gitleaks
+
+title = "mymle-og secret scan"
+
+[extend]
+# Inherit gitleaks' built-in rule set (AWS, GitHub, Stripe, Slack, generic keys, ...)
+useDefault = true
+
+# ---------------------------------------------------------------------------
+# Project-specific rules — the providers this installation actually talks to
+# ---------------------------------------------------------------------------
+
+[[rules]]
+id = "elevenlabs-api-key"
+description = "ElevenLabs API key (sk_ + 40-64 hex)"
+regex = '''\bsk_[0-9a-f]{40,64}\b'''
+keywords = ["sk_"]
+
+[[rules]]
+id = "elevenlabs-xi-api-key-header"
+description = "ElevenLabs key passed via an xi-api-key header"
+regex = '''(?i)xi-api-key["'\s:=\\]{1,8}([0-9a-f]{32,64})'''
+keywords = ["xi-api-key"]
+
+[[rules]]
+id = "supabase-service-role-jwt"
+description = "CRITICAL: Supabase service_role JWT — bypasses RLS, full DB read/write"
+# A service_role JWT carries {"role":"service_role"} in its base64url payload.
+# "service_role" encodes to one of three strings depending on byte alignment.
+regex = '''\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]*(?:c2VydmljZV9yb2xl|NlcnZpY2Vfcm9sZ|zZXJ2aWNlX3JvbG)[A-Za-z0-9_-]*\.[A-Za-z0-9_-]{20,}\b'''
+keywords = ["eyJ"]
+
+[[rules]]
+id = "supabase-jwt"
+description = "Supabase JWT (anon keys are public by design — still prefer env vars)"
+regex = '''\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\b'''
+keywords = ["eyJ"]
+
+[[rules]]
+id = "openrouter-api-key"
+description = "OpenRouter API key"
+regex = '''\bsk-or-v1-[0-9a-f]{40,}\b'''
+keywords = ["sk-or-v1-"]
+
+# ---------------------------------------------------------------------------
+# Allowlists — placeholders, docs and generated/vendored content
+# ---------------------------------------------------------------------------
+
+[[allowlists]]
+description = "Placeholders, empty assignments and env-var indirection"
+regexTarget = "line"
+regexes = [
+  # your-service-role-key-here, your-elevenlabs-api-key-here, ...
+  '''(?i)your[-_]?[a-z-]*(key|secret|token)[-_]?here''',
+  '''(?i)\b(xxx+|changeme|placeholder|example|redacted|dummy|<[a-z_-]+>)\b''',
+  # KEY= with no value (documentation of required vars)
+  '''^\s*[A-Z][A-Z0-9_]*=\s*$''',
+  # ${VAR}, process.env.X, import.meta.env.X — indirection, not a secret
+  '''\$\{[A-Z_]+\}''',
+  '''(?:process\.env|import\.meta\.env)\b''',
+]
+
+[[allowlists]]
+description = "Docs and example env files carry placeholder names only"
+paths = [
+  '''\.env\.example$''',
+]
+
+[[allowlists]]
+description = "Generated, vendored and binary content"
+paths = [
+  '''(^|/)node_modules/''',
+  '''(^|/)dist/''',
+  '''(^|/)venv/''',
+  '''(^|/)__pycache__/''',
+  '''(pnpm-lock\.yaml|package-lock\.json|yarn\.lock)$''',
+  '''\.(png|jpe?g|gif|webp|ico|woff2?|ttf|pdf|mp3|wav|mp4)$''',
+]

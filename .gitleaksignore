@@ -1,0 +1,25 @@
+# gitleaks baseline — KNOWN HISTORICAL EXPOSURE
+#
+# Secrets committed to this repository before the secret-scan guard existed.
+# They remain readable in git history. Listing them here keeps the full-history
+# scan actionable: any NEW secret still fails CI.
+#
+# All entries are Supabase `anon` (publishable) keys for project
+# koapryvdrgflimeheezh, which are public by design — an anon key is shipped to
+# every browser and is only as strong as the project's RLS policies. The owner
+# deleted that Supabase project on 2026-08-31, so these are dead.
+#
+# Remove these lines once history is purged (git filter-repo).
+#
+# Fingerprint format: <commit>:<file>:<rule>:<startline>  (no secret values)
+7ea659f233566ce1ef88987f081b72dbd0d70480:.env:jwt:2
+7ea659f233566ce1ef88987f081b72dbd0d70480:.env:supabase-jwt:2
+7ea659f233566ce1ef88987f081b72dbd0d70480:src/integrations/supabase/client.ts:jwt:6
+7ea659f233566ce1ef88987f081b72dbd0d70480:src/integrations/supabase/client.ts:supabase-jwt:6
+a2028bfe5c665a4c97407515cc71096a9236ae85:.env:jwt:2
+a2028bfe5c665a4c97407515cc71096a9236ae85:.env:supabase-jwt:2
+a275f743db85b5929d60340618905a93c472c104:.env:jwt:2
+a275f743db85b5929d60340618905a93c472c104:.env:supabase-jwt:2
+bafc5c90aaf2f2ca7f8a9b62a4f39c69ab61a600:src/integrations/supabase/client.ts:jwt:6
+bafc5c90aaf2f2ca7f8a9b62a4f39c69ab61a600:src/integrations/supabase/client.ts:supabase-jwt:6
+d04214d3c03775b654ab26001ae273e98374d5ae:src/lib/edgeTTS.ts:generic-api-key:8
